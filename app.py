@@ -34,15 +34,31 @@ agent_percentage = st.number_input(
     step=5.0
 )
 
+
+referral_percentage = st.number_input(
+    "Referral Fee (%)",
+    min_value=0.0,
+    max_value=100.0,
+    value=25.0
+)
+
 commission = property_price * commission_rate / 100
 
-agent_commission = commission * agent_percentage / 100
+referral_fee = commission * referral_percentage / 100
 
-brokerage_commission = commission - agent_commission
+remaining_commission = commission - referral_fee
+
+agent_commission = remaining_commission * agent_percentage / 100
+
+brokerage_commission = remaining_commission - agent_commission
 
 st.divider()
 
 st.subheader("Commission Report")
+
+st.metric("Referral Fee", f"${referral_fee:,.2f}")
+
+st.metric("Commission After Referral", f"${remaining_commission:,.2f}")
 
 col1, col2 = st.columns(2)
 
