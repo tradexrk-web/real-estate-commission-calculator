@@ -1,5 +1,92 @@
 
+from io import BytesIO
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import inch
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Paragraph,
+    Spacer,
+    Table,
+    TableStyle
+)
+
 import streamlit as st
+
+def generate_pdf_report(
+    property_price,
+    commission_rate,
+    agent_percentage,
+    referral_percentage,
+    commission,
+    referral_fee,
+    remaining_commission,
+    agent_commission,
+    brokerage_commission
+):
+    buffer = BytesIO()
+
+    document = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=50,
+        leftMargin=50,
+        topMargin=50,
+        bottomMargin=50
+    )
+
+    styles = getSampleStyleSheet()
+    story = []
+
+    story.append(
+        Paragraph("REAL ESTATE COMMISSION REPORT", styles["Title"])
+    )
+
+    story.append(Spacer(1, 20))
+
+    report_data = [
+        ["Description", "Amount / Percentage"],
+        ["Property Sale Price", f"${property_price:,.2f}"],
+        ["Commission Rate", f"{commission_rate:.2f}%"],
+        ["Agent Share", f"{agent_percentage:.2f}%"],
+        ["Referral Fee Rate", f"{referral_percentage:.2f}%"],
+        ["Total Commission", f"${commission:,.2f}"],
+        ["Referral Fee", f"${referral_fee:,.2f}"],
+        ["Commission After Referral", f"${remaining_commission:,.2f}"],
+        ["Agent Earnings", f"${agent_commission:,.2f}"],
+        ["Brokerage Earnings", f"${brokerage_commission:,.2f}"]
+    ]
+
+    table = Table(
+        report_data,
+        colWidths=[3.2 * inch, 2.5 * inch]
+    )
+
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.navy),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+        ("PADDING", (0, 0), (-1, -1), 10),
+        ("ALIGN", (1, 0), (1, -1), "RIGHT"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("BACKGROUND", (0, 1), (-1, -1), colors.whitesmoke)
+    ]))
+
+    story.append(table)
+
+    story.append(Spacer(1, 25))
+
+    story.append(
+        Paragraph(
+            "This report is generated for informational purposes.",
+            styles["Italic"]
+        )
+    )
+
+    document.build(story)
+
+    return buffer.getvalue()
 
 st.set_page_config(
     page_title="Real Estate Commission Calculator",
@@ -69,6 +156,27 @@ with col2:
     st.metric("Agent Earnings", f"${agent_commission:,.2f}")
 
 st.metric("Brokerage Earnings", f"${brokerage_commission:,.2f}")
+
+pdf_report = generate_pdf_report(
+    property_price,
+    commission_rate,
+    agent_percentage,
+    referral_percentage,
+    commission,
+    referral_fee,
+    remaining_commission,
+    agent_commission,
+    brokerage_commission
+)
+
+st.download_button(
+    label="📄 Download PDF Report",
+    data=pdf_report,
+    file_name="commission_report.pdf",
+    mime="application/pdf",
+    use_container_width=True
+)
+
 
 st.caption("Commission calculations are estimates.")
 
